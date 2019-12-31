@@ -1,6 +1,8 @@
 FROM ubuntu:xenial
 MAINTAINER Daniel Vera
 
+COPY awsBatchHelper /usr/local/bin/
+
 WORKDIR /root
 RUN apt-get update
 RUN apt-get install -y python wget curl unzip lsb-release apt-transport-https ca-certificates
