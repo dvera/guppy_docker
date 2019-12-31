@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+
+if [ -z $S3_INPUT ]; then
+  echo "S3_INPUT NOT DEFINED" > /dev/stderr
+  exit 1
+fi
+
+if [ -z $CPU_THREADS_PER_CALLER ]; then
+  CPU_THREADS_PER_CALLER=1
+fi
+
+if [ -z $NUM_CALLERS ]; then
+  NUM_CALLERS=1
+fi
+
+if [ -z $FLOWCELL ]; then
+  FLOWCELL=FLO-MIN106
+fi
+
+if [ -z $KIT ]; then
+  KIT=SQK-LSK109
+fi
+
+if [ -z $S3_OUTPUT ]; then
+  S3_OUTPUT=$(dirname $S3_INPUT)
+fi
+
+INPUT_BASE=$(basename $S3_INPUT)
+
+if [[ $S3_INPUT == *.tar ]]; then
+  INPUT_PATH=${INPUT_BASE%.tar}
+  mkdir -p $INPUT_PATH
+  aws s3 cp $S3_INPUT $INPUT_BASE
+  tar -xf $INPUT_BASE -C $INPUT_PATH
+elif [[ $S3_INPUT == *.fast5]]; then
+  INPUT_PATH=${INPUT_BASE%.fast5}
+  mkdir -p $INPUT_PATH
+  aws s3 cp $S3_INPUT $INPUT_PATH/    
+else
+  aws s3 cp --recursive $S3_INPUT $INPUT_BASE
+  INPUT_PATH=INPUT_BASE
+done
+
+OUTPUT_PATH=${INPUT_PATH}_guppy
+
+guppy_basecaller -r --compress_fastq \
+--flowcell $FLOWCELL \
+--kit $KIT \
+--cpu_threads_per_caller $CPU_THREADS_PER_CALLER \
+--num_callers $NUM_CALLERS \
+--input_path $INPUT_PATH \
+--save_path $OUTPUT_PATH
+
+if [ ! -z $S3_TAR_OUTPUT ]; then
+  tar -cf ${OUTPUT_PATH}.tar $OUTPUT_PATH
+  aws s3 cp ${OUTPUT_PATH}.tar $S3_OUTPUT
+else
+  aws s3 cp --recursive $OUTPUT_PATH ${S3_OUTPUT}/${OUTPUT_PATH}
+fi
+
+
