@@ -32,14 +32,14 @@ if [[ $S3_INPUT == *.tar ]]; then
   mkdir -p $INPUT_PATH
   aws s3 cp $S3_INPUT $INPUT_BASE
   tar -xf $INPUT_BASE -C $INPUT_PATH
-elif [[ $S3_INPUT == *.fast5]]; then
+elif [[ $S3_INPUT == *.fast5 ]]; then
   INPUT_PATH=${INPUT_BASE%.fast5}
   mkdir -p $INPUT_PATH
   aws s3 cp $S3_INPUT $INPUT_PATH/    
 else
   aws s3 cp --recursive $S3_INPUT $INPUT_BASE
-  INPUT_PATH=INPUT_BASE
-done
+  INPUT_PATH=$INPUT_BASE
+fi
 
 OUTPUT_PATH=${INPUT_PATH}_guppy
 
